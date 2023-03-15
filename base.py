@@ -24,7 +24,8 @@ def diagonalize(hermitian_mtx, verify=False):
     """diagonalize a hermitian matrix and output 
     the special unitary matrix that diagonalize it.
     The eivenvectors are sorted according to the size 
-    of the eigenvalues."""
+    of the eigenvalues.
+    """
     val, vec = eig(hermitian_mtx)
     sorted_idx_arr = val.argsort()
     val = val[sorted_idx_arr]
@@ -53,20 +54,29 @@ def derivs(x, y,
            ma,
            omega,
            cB,
-           dmg2_over_om_dx,
-           dthdx):
+           mg2_over_om_fn,
+           theta_fn,
+           ):
+    """The integrand to be evolved, corresponding to the coupled ODE in the notes.
+
+    :param x: the distance propagated
+    :param y: the array of gamma_perp, gamma_parallal, a
+    :param ma: the axion mass 
+    :param omega: the energy of the axion-photon system
+    :param cB: c_agamma * B
+    :param mg2_over_om_fn: mgamma^2/omega as a function of distance
+    :param theta_fn: theta(x)
+
+    """
 
     ma2_over_om = ma**2/omega
 
-    def th_fn(x): return dthdx * x
-    def mg2_over_om(x): return ma2_over_om + (x)*dmg2_over_om_dx
-
     # integrand
     h_arr = np.zeros((3, 3), dtype='complex_')
-    h_arr += np.array(M2_over_om(mg2_over_om(x),
-                                 mg2_over_om(x),
+    h_arr += np.array(M2_over_om(mg2_over_om_fn(x),
+                                 mg2_over_om_fn(x),
                                  ma2_over_om)
-                      + Hint(cB, th_fn(x))) * (-1.j)
+                      + Hint(cB, theta_fn(x))) * (-1.j)
 
     res = np.dot(h_arr, y)
 
@@ -77,26 +87,24 @@ def mixing_angle(x,
                  ma,
                  omega,
                  cB,
-                 dmg2_over_om_dx,
-                 dthdx):
+                 mg2_over_om_fn,
+                 # dmg2_over_om_dx,
+                 # dthdx
+                 ):
     """The mixing angle
 
+    :param x: the distance propagated
+    :param ma: the axion mass 
+    :param omega: the energy of the axion-photon system
+    :param cB: c_agamma * B
+    :param mg2_over_om_fn: mgamma^2/omega as a function of distance
     """
 
     ma2_over_om = ma**2/omega
-    #rate = ma2_over_om*dlnm2dx
-
-    def th_fn(x): return dthdx * x
-    #mg2_over_om = lambda x: ma2_over_om + (x)*rate
-    def mg2_over_om(x): return ma2_over_om + (x)*dmg2_over_om_dx
-
-    # #x_arr = np.linspace(-8, 8, 50)
-    # x_arr = np.linspace(xi, xe, npoints)
-    # # x_arr = np.logspace(, xe, npoints)
     x_arr, is_scalar = treat_as_arr(x)
 
     sin_alpha = np.sqrt(
-        4.*cB**2/(4.*cB**2+(mg2_over_om(x_arr)-ma2_over_om)**2))
+        4.*cB**2/(4.*cB**2+(mg2_over_om_fn(x_arr)-ma2_over_om)**2))
 
     if is_scalar:
         sin_alpha = np.squeeze(sin_alpha)
