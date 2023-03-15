@@ -112,6 +112,23 @@ def mixing_angle(x,
     return sin_alpha
 
 
+def Pag_nr_analytical(x, dthetadx, cB):
+    """This is the analytical expression from Seokhoon's notes
+
+    :param ma: the axion mass
+    :param mg: the photon plasma frequency
+    :param om: the energy
+    :param dthetadx: dtheta/dx
+
+    """
+    Delta_ag = cB/2
+    Delta_phi = dthetadx
+    k = np.sqrt(Delta_ag**2 + Delta_phi**2)
+    prob = Delta_ag**2/(Delta_ag**2+Delta_phi**2)**2*np.sin(x/2.*k)**2\
+        * (2.*Delta_phi**2 + Delta_ag**2*(1.+np.cos(x*k)))
+    return prob
+
+
 def treat_as_arr(arg):
     """A routine to cleverly return scalars as (temporary and fake) arrays. True arrays are returned unharmed.
     """
