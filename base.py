@@ -30,7 +30,7 @@ def Hint(cB, th, only_para=False):
     """ The interaction matrix that is responsible for
     the aovided level crossing
     """
-    # FIXME:
+    # debug the initial polarization direction
     # th = th + 2.3*np.pi/4.
     if not only_para:
         res = np.array([[0, 0, cB*np.sin(th)/2.], [0, 0, cB *
@@ -115,10 +115,7 @@ def mixing_angle(x,
                  ma,
                  omega,
                  cB,
-                 mg2_over_om_fn,
-                 # dmg2_over_om_dx,
-                 # dthdx
-                 ):
+                 mg2_over_om_fn):
     """The mixing angle
 
     :param x: the distance propagated
@@ -175,8 +172,6 @@ def treat_as_arr(arg):
 def get_theta(x_arr, domain_size, rnd_seed=None, order=2, cache=None):
     """Generate a realization of the magnetic field
 
-    :param x:
-    :returns:
 
     """
     xi = x_arr[0]
@@ -299,27 +294,14 @@ def get_psurv(xi=1.e-4,
         raise Exception(
             'seed==constant is deprecated. Use gaussian with small sigma instead.')
 
-        # def theta_fn(x):
-        #     return theta_dot * (1.+sigma) * x
-        # # note this factor is to combat the numerical precision floor
-        # # 1/50 is to make sure no NL regime is introduced by cB
-        # _cB_rescale_factor_ = np.abs(theta_dot*sigma/(cB)/50.)
-
-        # # determine the tolerance
-        # # make sure it's 2 orders of mag smaller than the first peak
-        # amplitude = (cB*_cB_rescale_factor_)**2/(sigma*theta_dot)**2
-        # tolerance = amplitude/1000.
-
     else:
         # Gaussian realization
-        # TODO: consider integrate domain-by-domain
 
         if seed is not None:
             np.random.seed(seed)
 
         dtheta_arr = get_dtheta_gaussian(
             num_of_domains, sigma, bg=theta_dot)
-        # print(dtheta_arr)
         x_arr = np.linspace(xi, xe, num_of_domains)
 
         x_fine_arr = np.linspace(xi, xe, num_of_domains*100)
@@ -330,41 +312,24 @@ def get_psurv(xi=1.e-4,
         theta_fine_arr = integrate_theta(x_fine_arr, dtheta_fine_arr)
         theta_fn = interp1d(x_fine_arr, theta_fine_arr)
 
-        # now determine the _cB_rescale_factor_ and tolerance
-        # based on the smallest fluctuation
-        # drawback: the computation could get stuck if there's a theta very close to bg value
-        # sigma_min = min(np.abs(dtheta_arr-theta_dot))
-        # print(sigma_min)
-        # set a lower bound of 0.001 so that it doesn't get stuck
-        # sigma_min = max(0.001, sigma_min)
-        # print(sigma_min)
-        # _cB_rescale_factor_ = np.abs(theta_dot*sigma_min/(cB)/50.)
+        # since it's never in the maximal mixing + NL regime,
+        # the final result can always be rescaled w.r.t. (gB)^2
 
         # make sure in each domain _cB_rescale_factor_ doesn't cause it to become NL
-        # max_domain_size = max(x_arr)
-        # print("max_domain_size", max_domain_size/_m_eV_)
-
-        # TODO: change to the largest domain
-        # max_domain_size = xe/num_of_domains
-        # _cB_rescale_factor_ = 0.2/max_domain_size/cB
         _cB_rescale_factor_ = 0.2/(xe-xi)/cB
         # _cB_rescale_factor_ = 1e10
         # _cB_rescale_factor_ = 1.
-        # _cB_rescale_factor_ = 0.01/(xe-xi)/cB
 
         # make sure if there's oscillation, it is resolved
         # if it's in the linear regime, it's okay
         amplitude = 1.e-6
         for x in x_arr:
-            # k = dtheta_fn(x)-mass_phase
             k = np.sqrt((dtheta_fn(x)-mass_phase) **
                         2 + (cB*_cB_rescale_factor_)**2)
             phase = np.abs(k*x)
             if phase > 1.:
                 amplitude = min(amplitude, (cB*_cB_rescale_factor_)**2/k**2)
         tolerance = amplitude*1e-5
-        # FIXME:
-        # tolerance = 1.e-13
         if verbose:
             print("(cB*_cB_rescale_factor_)**2/k**2",
                   (cB*_cB_rescale_factor_)**2/k**2)
@@ -378,14 +343,10 @@ def get_psurv(xi=1.e-4,
             print("ma=%e" % ma)
             print("_cB_rescale_factor_: %e" % _cB_rescale_factor_)
             print("tolerance: ", tolerance)
-        # print("mass_phase: ", mass_phase)
-        # print("theta_dot: ", theta_dot)
-        # print("omega: ", omega)
 
         # TODO: adaptive tolerance until solution stablizes
 
     # Not including any plasma mass
-
     def mg2_over_om_fn(x):
         x, is_scalar = treat_as_arr(x)
         res = (x)*0.
@@ -418,13 +379,12 @@ def get_psurv(xi=1.e-4,
                         # [0.+1.j, 0.+0.j, 0.+0.j],
                         method='DOP853',
                         # method='RK45',
+                        # method='BDF',
                         vectorized=True,
-                        # rtol=0.01,
-                        # atol=1e-100,
-                        # rtol=tolerance,
-                        # atol=tolerance,
-                        rtol=1e-13,
-                        atol=1e-13,
+                        rtol=tolerance,
+                        atol=tolerance,
+                        # rtol=1e-13,
+                        # atol=1e-13,
                         args=[ma, omega, cB*_cB_rescale_factor_,
                               mg2_over_om_fn, theta_fn],
                         dense_output=True)
@@ -459,7 +419,7 @@ def Pag_helical(ga, ma, B, omega, L, theta_dot=0):
     amp_p = cB**2/k_p**2
     amp_m = cB**2/k_m**2
     return amp_p * np.sin(k_p*L_in_eV/2.)**2 + amp_m * np.sin(k_m*L_in_eV/2.)**2
-    # FIXME:
+    # Debug:
     # return amp_p * np.sin(k_p*L_in_eV/2.)**2
-    # FIXME:
+    # Debug:
     # return (np.sqrt(amp_p) * np.sin(k_p*L_in_eV/2.) + np.sqrt(amp_m) * np.sin(k_m*L_in_eV/2.))**2

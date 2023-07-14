@@ -64,10 +64,6 @@ def set_param(param,
         raise Exception(
             'You can only specify one of the two, omega or wavelength. You set both.')
 
-    # if (theta_dot is not None) and (theta_dot_mean is not None):
-    #     raise Exception(
-    #         'You can only specify one of the two, theta_dot or theta_mean. You set both.')
-
     if (noise_frequency is not None) and (num_of_domains is not None):
         raise Exception(
             'You can only specify one of the two, noise_frequency or num_of_domains. You set both.')
@@ -75,9 +71,6 @@ def set_param(param,
     if (sigma is not None) and (sigma_theta_dot is not None):
         raise Exception(
             'You can only specify one of the two, sigma or sigma_theta_dot. You set both.')
-
-    # this_param = deepcopy(param)
-    # this_param = param
 
     if xi is not None:
         param.xi = xi
@@ -162,22 +155,6 @@ def get_sol(param, state=None):
                        seed=None,
                        verbose=param.verbose,
                        axion_init=param.axion_init)
-
-    # moved to get_psurv to handle non-axion_init case
-    # # get the final conversion probability
-    # psurv = ((1.-np.abs(sol.y[2])**2)/sol._cB_rescale_factor_**2)[-1]
-    # sol.psurv = psurv
-
-    # since it's never in the maximal mixing + NL regime,
-    # the final result can always be rescaled w.r.t. (gB)^2
-
-    # # e.g. use ALPS II as the anchor
-    # ga_ref_ALPSII = 1.897378608795087830e-11  # GeV**-1
-    # B_ref = 5.3  # Tesla
-    # x_ref = 106  # meter
-    # psurv_ALPSII = 1./4 * (ga_ref_ALPSII * B_ref * x_ref * ba._G_over_GeV2_ *
-    #                        ba._Tesla_over_Gauss_*ba._m_eV_*ba._GeV_over_eV_)**2
-    # ga = param.ga / (psurv/psurv_ALPSII)**0.5
 
     return sol
 
@@ -331,7 +308,6 @@ def load_scan(path):
     psurv_arr = []
     for (sol, param) in data[:-1]:
         ma_arr.append(param.ma)
-        # print(sol.psurv)
         psurv_arr.append(sol.psurv)
 
     grp_idx = np.digitize(ma_arr, np.unique(ma_arr))
@@ -354,17 +330,6 @@ def load_scan(path):
     # each index '1', '2', corresponds to one ma
 
     return ma_arr, grouped_psurv_dct, data
-
-
-# def get_contour(psurv_arr, ga_ref, psurv_target):
-#     """Get ga such that it reproduces psurv_target. psurv_arr is computed using ga_ref. You should be able to find ga_ref in the param card.
-
-#     """
-#     psurv_arr = np.array(psurv_arr)
-#     # average over production and detection
-#     psurv_arr = psurv_arr/np.sqrt(2)
-#     ga = ga_ref / (psurv_arr/psurv_target)**0.5
-#     return ga
 
 
 def rescale_ga(psurv_prod_arr,
@@ -408,8 +373,6 @@ def get_contours(path_prod, path_det, exp='ALPSII'):
     ga_mean_arr = []
     ga_up_arr = []
     ga_low_arr = []
-    # log10ga_sigma_arr = []
-    # log10ga_mean_arr = []
 
     # here I assume the ma_prod_arr and ma_det_arr are the same.
     # sanity check
