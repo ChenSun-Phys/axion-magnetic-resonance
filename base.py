@@ -5,6 +5,18 @@ import numpy as np
 from numpy.linalg import eig
 from scipy.integrate import simpson
 from scipy.interpolate import interp1d
+from numpy.random import normal
+from scipy.integrate import solve_ivp
+
+# constant numbers
+_m_eV_ = 5067730.58270578
+_G_over_GeV2_ = 1.95352783207652e-20
+_GeV_over_eV_ = 1.e9
+_one_over_nm_eV_ = 197.326985655594  # does not contain 2pi
+_Tesla_over_Gauss_ = 1.e4
+_m_MHz_ = 0.00333564
+_eV_over_GHz_ = 1519267.40787114
+_eV_over_MHz_ = 1519267407.87114
 
 
 def M2_over_2om(m1, m2, m3):
@@ -14,12 +26,18 @@ def M2_over_2om(m1, m2, m3):
     return res
 
 
-def Hint(cB, th):
+def Hint(cB, th, only_para=False):
     """ The interaction matrix that is responsible for
     the aovided level crossing
     """
-    res = np.array([[0, 0, cB*np.sin(th)/2.], [0, 0, cB *
-                   np.cos(th)/2.], [cB*np.sin(th)/2., cB*np.cos(th)/2., 0]])
+    # FIXME:
+    # th = th + 2.3*np.pi/4.
+    if not only_para:
+        res = np.array([[0, 0, cB*np.sin(th)/2.], [0, 0, cB *
+                                                   np.cos(th)/2.], [cB*np.sin(th)/2., cB*np.cos(th)/2., 0]])
+    else:
+        res = np.array([[0, 0, 0], [0, 0, cB *
+                                    np.cos(th)/2.], [0, cB*np.cos(th)/2., 0]])
     return res
 
 
@@ -31,24 +49,30 @@ def diagonalize(hermitian_mtx, verify=False):
     """
     val, vec = eig(hermitian_mtx)
     sorted_idx_arr = val.argsort()
+
+    # sort eigenvalues
     val = val[sorted_idx_arr]
-    # unitary_mtx = vec.transpose()[sorted_idx_arr]
-    # unitary_mtx = unitary_mtx.transpose()
+
+    # note that the eigenvectors may not be properly normalized
+    # for i, _ in enumerate(vec[0]):
+    #     veci = vec[:, i]
+    #     vec[:, i] = veci/np.sqrt(np.dot(veci, veci))
     unitary_mtx = vec[:, sorted_idx_arr]
 
-    # correct the sign
+    # correct the overall sign
     unitary_mtx = unitary_mtx*np.sign(np.linalg.det(unitary_mtx))
 
     if verify:
         print("eigenvalue:", val)
         print("hamiltonian:\n", hermitian_mtx)
-        print("unitary before reordering:\n", vec)
-        print("unitary matrix:\n", unitary_mtx)
         print("determinant: ", np.linalg.det(unitary_mtx))
-        print("UHU^T before reordering\n", np.dot(
-            vec.transpose(), np.dot(hermitian_mtx, vec)))
-        print("UHU^T\n", np.dot(unitary_mtx.transpose(),
+        print("unitarity:", np.dot(
+            unitary_mtx.transpose().conjugate(), unitary_mtx))
+        print("U^+HU\n", np.dot(unitary_mtx.transpose().conjugate(),
               np.dot(hermitian_mtx, unitary_mtx)))
+        print("check eigenvec norm:")
+        for i, _ in enumerate(val):
+            print(np.sqrt(np.dot(vec[:, i].conjugate(), vec[:, i])))
 
     return val, unitary_mtx
 
@@ -59,6 +83,7 @@ def derivs(x, y,
            cB,
            mg2_over_om_fn,
            theta_fn,
+           only_para=False
            ):
     """The integrand to be evolved, corresponding to the coupled ODE in the notes.
 
@@ -79,7 +104,7 @@ def derivs(x, y,
     h_arr += np.array(M2_over_2om(mg2_over_om_fn(x),
                                   mg2_over_om_fn(x),
                                   ma2_over_om)
-                      + Hint(cB, theta_fn(x))) * (-1.j)
+                      + Hint(cB, theta_fn(x), only_para=only_para)) * (-1.j)
 
     res = np.dot(h_arr, y)
 
@@ -202,3 +227,239 @@ def get_theta(x_arr, domain_size, rnd_seed=None, order=2, cache=None):
         res = (dthetadx2_arr, dthetadx_arr, theta_arr)
 
     return np.array(res)
+
+
+def get_dtheta_gaussian(num_of_domains, sigma, bg):
+    """Generate a small perturbation to theta dot
+
+    :param num_of_domains: number of domains. Inside each domain theta dot is constant.
+    :param sigma: this is the standard deviation of the variable delta(\dot \theta)/ \bar \dot \theta
+    :returns: the gaussian perturbation of theta dot
+
+    """
+
+    # num_of_domains = (xe-xs)/domain_size
+    delta = normal(loc=0., scale=sigma, size=int(num_of_domains))
+    # print("delta:", delta)
+    dtheta_arr = bg*(1.+delta)
+    # print("bg:", bg)
+
+    return dtheta_arr
+
+
+def integrate_theta(x_arr, dtheta_arr):
+
+    dx_arr = np.diff(x_arr, prepend=x_arr[0])
+    # dx_arr = np.diff(x_arr, append=x_arr[-1])
+    theta_arr = np.cumsum(dtheta_arr*dx_arr)
+    return theta_arr
+
+
+def get_psurv(xi=1.e-4,
+              xe=106.,
+              ma=1.e-2,
+              ga=1.e-9,
+              # theta_dot=None,
+              theta_dot_mean=1.,
+              sigma=0.01,
+              wavelength=1064,
+              B=5.3,
+              num_of_domains=10,
+              seed=None,
+              verbose=True,
+              axion_init=True):
+    """Generate one Gaussian realization of the conversion probability. The magnetic field is assumed to rotate with theta_dot centered around an average value, with 1 sigma deviation specified. 
+
+    :param xi: initial point of the propagation [m] (Default: 1.e-3)
+    :param xe: final point of the propagation [m] (Default: 106., from ALPS II)
+    :param ma: axion mass [eV]
+    :param ga: the axion photon coupling [GeV**-1] (Default: 1e-9)
+    :param theta_dot_mean: if theta_dot is None, use this as the mean value of theta_dot in the unit of [-ma**2/(2.*omega)] (Default: 1.)
+    :param sigma: the fluctuation of theta dot (Default: 1%)
+    :param wavelength: the wave length of the laser [nm] (Default:  1064., from ALPS II)
+    :param B: the magnitude of the magnetic field [T] (Default: 5.3)
+    :param num_of_domains: the number of domains
+    :param seed: random number generator seed used to reproduce the same realization
+    :param verbose: if True output intermediate steps (Default: True)
+    :param axion_init: if true, start with pure axion initial state (Default: True)
+
+    """
+    # helical numerical
+    xi = xi * _m_eV_  # [1/eV]
+    xe = xe * _m_eV_  # [1/eV]
+    omega = 2.*np.pi/wavelength*_one_over_nm_eV_
+    cB = ga*(B*_Tesla_over_Gauss_)*_G_over_GeV2_*_GeV_over_eV_  # [eV]
+    # 1.000001 for numerical divergence
+    mass_phase = (-ma**2/(2.*omega))
+    # print("mass_phase:", mass_phase)
+    # if theta_dot is None:
+    theta_dot = theta_dot_mean * mass_phase * 1.000001
+
+    if seed == 'constant':
+        raise Exception(
+            'seed==constant is deprecated. Use gaussian with small sigma instead.')
+
+        # def theta_fn(x):
+        #     return theta_dot * (1.+sigma) * x
+        # # note this factor is to combat the numerical precision floor
+        # # 1/50 is to make sure no NL regime is introduced by cB
+        # _cB_rescale_factor_ = np.abs(theta_dot*sigma/(cB)/50.)
+
+        # # determine the tolerance
+        # # make sure it's 2 orders of mag smaller than the first peak
+        # amplitude = (cB*_cB_rescale_factor_)**2/(sigma*theta_dot)**2
+        # tolerance = amplitude/1000.
+
+    else:
+        # Gaussian realization
+        # TODO: consider integrate domain-by-domain
+
+        if seed is not None:
+            np.random.seed(seed)
+
+        dtheta_arr = get_dtheta_gaussian(
+            num_of_domains, sigma, bg=theta_dot)
+        # print(dtheta_arr)
+        x_arr = np.linspace(xi, xe, num_of_domains)
+
+        x_fine_arr = np.linspace(xi, xe, num_of_domains*100)
+        dtheta_fn = interp1d(
+            x_arr, dtheta_arr, kind='nearest')
+        dtheta_fine_arr = dtheta_fn(x_fine_arr)
+
+        theta_fine_arr = integrate_theta(x_fine_arr, dtheta_fine_arr)
+        theta_fn = interp1d(x_fine_arr, theta_fine_arr)
+
+        # now determine the _cB_rescale_factor_ and tolerance
+        # based on the smallest fluctuation
+        # drawback: the computation could get stuck if there's a theta very close to bg value
+        # sigma_min = min(np.abs(dtheta_arr-theta_dot))
+        # print(sigma_min)
+        # set a lower bound of 0.001 so that it doesn't get stuck
+        # sigma_min = max(0.001, sigma_min)
+        # print(sigma_min)
+        # _cB_rescale_factor_ = np.abs(theta_dot*sigma_min/(cB)/50.)
+
+        # make sure in each domain _cB_rescale_factor_ doesn't cause it to become NL
+        # max_domain_size = max(x_arr)
+        # print("max_domain_size", max_domain_size/_m_eV_)
+
+        # TODO: change to the largest domain
+        # max_domain_size = xe/num_of_domains
+        # _cB_rescale_factor_ = 0.2/max_domain_size/cB
+        _cB_rescale_factor_ = 0.2/(xe-xi)/cB
+        # _cB_rescale_factor_ = 1e10
+        # _cB_rescale_factor_ = 1.
+        # _cB_rescale_factor_ = 0.01/(xe-xi)/cB
+
+        # make sure if there's oscillation, it is resolved
+        # if it's in the linear regime, it's okay
+        amplitude = 1.e-6
+        for x in x_arr:
+            # k = dtheta_fn(x)-mass_phase
+            k = np.sqrt((dtheta_fn(x)-mass_phase) **
+                        2 + (cB*_cB_rescale_factor_)**2)
+            phase = np.abs(k*x)
+            if phase > 1.:
+                amplitude = min(amplitude, (cB*_cB_rescale_factor_)**2/k**2)
+        tolerance = amplitude*1e-5
+        # FIXME:
+        # tolerance = 1.e-13
+        if verbose:
+            print("(cB*_cB_rescale_factor_)**2/k**2",
+                  (cB*_cB_rescale_factor_)**2/k**2)
+            print("dtheta_arr", dtheta_arr)
+            print("theta_dot=%e" % theta_dot)
+            print("dtheta_fn(x)", dtheta_fn(x))
+            print("mass_phase", mass_phase)
+            print("ma2_over_om=%e" % mass_phase)
+            print("cB=%e" % (cB))
+            print("k=%e" % k)
+            print("ma=%e" % ma)
+            print("_cB_rescale_factor_: %e" % _cB_rescale_factor_)
+            print("tolerance: ", tolerance)
+        # print("mass_phase: ", mass_phase)
+        # print("theta_dot: ", theta_dot)
+        # print("omega: ", omega)
+
+        # TODO: adaptive tolerance until solution stablizes
+
+    # Not including any plasma mass
+
+    def mg2_over_om_fn(x):
+        x, is_scalar = treat_as_arr(x)
+        res = (x)*0.
+        if is_scalar:
+            res = np.squeeze(res)
+        return res
+
+    if axion_init:
+        sol = solve_ivp(derivs,
+                        [xi, xe],
+                        [0.+0.j, 0.+0.j, 1.+0.j],
+                        method='DOP853', vectorized=True,
+                        # rtol=0.01,
+                        # atol=1e-100,
+                        rtol=tolerance,
+                        atol=tolerance,
+                        args=[ma, omega, cB*_cB_rescale_factor_,
+                              mg2_over_om_fn, theta_fn],
+                        dense_output=True)
+        # get the final conversion probability
+        psurv = ((1.-np.abs(sol.y[2])**2)/_cB_rescale_factor_**2)[-1]
+        sol.psurv = psurv
+
+    else:
+        sol = solve_ivp(derivs,
+                        [xi, xe],
+                        # [-1./np.sqrt(2)+0.j, 1./np.sqrt(2)+0.j, 0.+0.j],
+                        [0.j, 1.+0.j, 0.+0.j],
+                        # [1.+0.j, 0.+0.j, 0.+0.j],
+                        # [0.+1.j, 0.+0.j, 0.+0.j],
+                        method='DOP853',
+                        # method='RK45',
+                        vectorized=True,
+                        # rtol=0.01,
+                        # atol=1e-100,
+                        # rtol=tolerance,
+                        # atol=tolerance,
+                        rtol=1e-13,
+                        atol=1e-13,
+                        args=[ma, omega, cB*_cB_rescale_factor_,
+                              mg2_over_om_fn, theta_fn],
+                        dense_output=True)
+
+        # get the final conversion probability
+        psurv = (np.abs(sol.y[2])**2/_cB_rescale_factor_**2)[-1]
+        sol.psurv = psurv
+
+    # output
+    sol._cB_rescale_factor_ = _cB_rescale_factor_
+    sol.tolerance = tolerance
+
+    return sol
+
+
+def Pag_helical(ga, ma, B, omega, L, theta_dot=0):
+    """The analytical expression of axion to photon conversion, with rotating B field
+
+    :param ga: axion-photon coupling [GeV**-1]
+    :param ma: axion mass [eV]
+    :param B: amplitude of the magnetic field [T]
+    :param omega: energy [eV]
+    :param L: propagation length [m]
+    :param theta_dot: rotation frequency of B [eV]
+
+    """
+    cB = ga * (B/np.sqrt(2)) * _Tesla_over_Gauss_ * \
+        _G_over_GeV2_ * _GeV_over_eV_
+    L_in_eV = L * _m_eV_  # [1/eV]
+    k_p = (cB**2 + (ma**2/2./omega + theta_dot)**2)**0.5
+    k_m = (cB**2 + (ma**2/2./omega - theta_dot)**2)**0.5
+    amp_p = cB**2/k_p**2
+    amp_m = cB**2/k_m**2
+    return amp_p * np.sin(k_p*L_in_eV/2.)**2 + amp_m * np.sin(k_m*L_in_eV/2.)**2
+    # FIXME:
+    # return amp_p * np.sin(k_p*L_in_eV/2.)**2
+    # FIXME:
+    # return (np.sqrt(amp_p) * np.sin(k_p*L_in_eV/2.) + np.sqrt(amp_m) * np.sin(k_m*L_in_eV/2.))**2

@@ -5,3 +5,7 @@
 chains
 __pycache__
 .git
+plots
+*ipynb
+data
+full_result.dat
