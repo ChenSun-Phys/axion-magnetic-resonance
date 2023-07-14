@@ -37,7 +37,21 @@ To run this code, check out the notebook `demo.ipynb`. To reproduce the scan in 
 		 -t < theta dot mean>
 		 -p < initial state: photon 0, axion 1>
 
-The results can then be loaded using `demo.ipynb`.
+The results can then be loaded using `demo.ipynb`. The scans used in this work was produced with the following directive for the axion production mode:
+
+    python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 2000 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.01 -t 1. -p 0 -o chains/run024_prod_N2000_f001
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 2000 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.10 -t 1. -p 0 -o chains/run024_prod_N2000_f010
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 10 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.01 -t 1. -p 0 -o chains/run024_prod_N10_f001
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 10 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.10 -t 1. -p 0 -o chains/run024_prod_N10_f010
+
+and the following for the photon regeneration:
+
+    python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 2000 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.01 -t 1. -p 1 -o chains/run021_N2000_f001
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 2000 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.10 -t 1. -p 1 -o chains/run021_N2000_f010
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 10 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.01 -t 1. -p 1 -o chains/run021_N10_f001
+	python scan.py -s 0 -e 106 -B 5.3 -w 1064 -N 10 -l -4.5 -u -2.5 -g 20  -n 100 -c 1.e-11 -f 0.10 -t 1. -p 1 -o chains/run021_N10_f010
+
+It takes about 1-2 hours on a 48 core cluster (`Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz`) to finish the run. If the cluster in your physics department is jammed, you can first play with the pickled scan results we create. They can be downloaded from [here](https://cloud.cosmicdiscord.net/s/AEsKSkW2NPfwYxf) or by request. 
 
 
 Bibtex entry
