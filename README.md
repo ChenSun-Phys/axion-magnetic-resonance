@@ -1,6 +1,6 @@
-# Enhanced Axion-Photon Conversion: <br/> A Novel Approach With Rotating Magnetic Profile
+# Axion Magnetic Resonance: <br/> A Novel Enhancement in Axion-Photon Conversion
 
-A series of axion search experiments rely on converting them into photons inside a constant magnetic field background. We propose a novel method to enhance the conversion rate bewteen photons and axions with a varying magnetic field profile. We show that the enhancement can be achieved by both a rotating magnetic field and a harmonic oscillation of the magnitude. Our approach can extend the projected ALPS II reach in the axion-photon coupling ($g_{a\gamma}$) by two orders of magnitude at $m_a = 10^{-3}\;\mathrm{eV}$ with moderate assumptions. 
+We identify a new resonance, axion magnetic resonance (AMR), that can greatly enhance the conversion rate between axions and photons.  A series of axion search experiments rely on converting them into photons inside a constant magnetic field background. A common bottleneck of such experiments is the conversion amplitude being suppressed by the axion mass when $m_a \gtrsim 10^{-4}$ eV.  We point out that a spatial or temporal variation in the magnetic field can cancel the difference between the photon dispersion relation and that of the axion, hence greatly enhancing the conversion probability. We demonstrate that the enhancement can be achieved by both a helical magnetic field profile and a harmonic oscillation of the magnitude. Our approach can extend the projected ALPS II reach in the axion-photon coupling ($g_{a\gamma}$) by two orders of magnitude at $m_a = 10^{-3}\;\mathrm{eV}$ with moderate assumptions.
 
 This is the numerical code that accompanies the publication. 
 
@@ -61,7 +61,7 @@ If you find this study useful and/or use this code for your work, please conside
 
 	@article{Seong:2023xyz,
 	    author = "Seong, Hyeonseok and Sun, Chen and Yun, Seokhoon",
-	    title = "{Enhanced Axion-Photon Conversion: \\ A Novel Approach With Rotating Magnetic Profile}",
+	    title = "{Axion Magnetic Resonance:\\A Novel Enhancement in Axion-Photon Conversion}",
 	    eprint = "23xx.xxxxx",
 	    archivePrefix = "arXiv",
 	    primaryClass = "hep-ph",
