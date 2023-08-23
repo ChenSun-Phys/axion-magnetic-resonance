@@ -59,7 +59,7 @@ Bibtex entry
 
 If you find this study useful and/or use this code for your work, please consider citing [Seong, Sun, & Yun 2023](https://arxiv.org/abs/2308.10925). The BiBTeX is the following:
 
-	@article{Seong:2023,
+	@article{Seong:2023ran,
 	    author = "Seong, Hyeonseok and Sun, Chen and Yun, Seokhoon",
 	    title = "{Axion Magnetic Resonance:\\A Novel Enhancement in Axion-Photon Conversion}",
 	    eprint = "2308.10925",
