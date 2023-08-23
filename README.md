@@ -57,15 +57,15 @@ It takes about 1-2 hours on a 48 core cluster (`Intel(R) Xeon(R) CPU E5-2650 v4 
 Bibtex entry
 -----------------------------------------
 
-If you find this study useful and/or use this code for your work, please consider citing [Seong, Sun, & Yun 2023](https://arxiv.org/abs/xxxx.xxxxx). The BiBTeX is the following:
+If you find this study useful and/or use this code for your work, please consider citing [Seong, Sun, & Yun 2023](https://arxiv.org/abs/2308.10925). The BiBTeX is the following:
 
-	@article{Seong:2023xyz,
+	@article{Seong:2023,
 	    author = "Seong, Hyeonseok and Sun, Chen and Yun, Seokhoon",
 	    title = "{Axion Magnetic Resonance:\\A Novel Enhancement in Axion-Photon Conversion}",
-	    eprint = "23xx.xxxxx",
+	    eprint = "2308.10925",
 	    archivePrefix = "arXiv",
 	    primaryClass = "hep-ph",
-	    month = "xx",
+	    month = "08",
 	    year = "2023"
 	}
 
