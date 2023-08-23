@@ -61,11 +61,12 @@ If you find this study useful and/or use this code for your work, please conside
 
 	@article{Seong:2023ran,
 	    author = "Seong, Hyeonseok and Sun, Chen and Yun, Seokhoon",
-	    title = "{Axion Magnetic Resonance:\\A Novel Enhancement in Axion-Photon Conversion}",
+	    title = "{Axion Magnetic Resonance: A Novel Enhancement in Axion-Photon Conversion}",
 	    eprint = "2308.10925",
 	    archivePrefix = "arXiv",
 	    primaryClass = "hep-ph",
-	    month = "08",
+	    reportNumber = "DESY-23-118, LA-UR-23-29378, CTPU-PTC-23-39",
+	    month = "8",
 	    year = "2023"
 	}
 
