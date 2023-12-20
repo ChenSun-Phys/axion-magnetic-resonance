@@ -1,6 +1,6 @@
-# Enhanced Axion-Photon Conversion: <br/> A Novel Approach With Rotating Magnetic Profile
+# Axion Magnetic Resonance: <br/> A Novel Enhancement in Axion-Photon Conversion
 
-A series of axion search experiments rely on converting them into photons inside a constant magnetic field background. We propose a novel method to enhance the conversion rate bewteen photons and axions with a varying magnetic field profile. We show that the enhancement can be achieved by both a rotating magnetic field and a harmonic oscillation of the magnitude. Our approach can extend the projected ALPS II reach in the axion-photon coupling ($g_{a\gamma}$) by two orders of magnitude at $m_a = 10^{-3}\;\mathrm{eV}$ with moderate assumptions. 
+We identify a new resonance, axion magnetic resonance (AMR), that can greatly enhance the conversion rate between axions and photons.  A series of axion search experiments rely on converting them into photons inside a constant magnetic field background. A common bottleneck of such experiments is the conversion amplitude being suppressed by the axion mass when $m_a \gtrsim 10^{-4}$ eV.  We point out that a spatial or temporal variation in the magnetic field can cancel the difference between the photon dispersion relation and that of the axion, hence greatly enhancing the conversion probability. We demonstrate that the enhancement can be achieved by both a helical magnetic field profile and a harmonic oscillation of the magnitude. Our approach can extend the projected ALPS II reach in the axion-photon coupling ($g_{a\gamma}$) by two orders of magnitude at $m_a = 10^{-3}\;\mathrm{eV}$ with moderate assumptions.
 
 This is the numerical code that accompanies the publication. 
 
@@ -57,15 +57,16 @@ It takes about 1-2 hours on a 48 core cluster (`Intel(R) Xeon(R) CPU E5-2650 v4 
 Bibtex entry
 -----------------------------------------
 
-If you find this study useful and/or use this code for your work, please consider citing [Seong, Sun, & Yun 2023](https://arxiv.org/abs/xxxx.xxxxx). The BiBTeX is the following:
+If you find this study useful and/or use this code for your work, please consider citing [Seong, Sun, & Yun 2023](https://arxiv.org/abs/2308.10925). The BiBTeX is the following:
 
-	@article{Seong:2023xyz,
+	@article{Seong:2023ran,
 	    author = "Seong, Hyeonseok and Sun, Chen and Yun, Seokhoon",
-	    title = "{Enhanced Axion-Photon Conversion: \\ A Novel Approach With Rotating Magnetic Profile}",
-	    eprint = "23xx.xxxxx",
+	    title = "{Axion Magnetic Resonance: A Novel Enhancement in Axion-Photon Conversion}",
+	    eprint = "2308.10925",
 	    archivePrefix = "arXiv",
 	    primaryClass = "hep-ph",
-	    month = "xx",
+	    reportNumber = "DESY-23-118, LA-UR-23-29378, CTPU-PTC-23-39",
+	    month = "8",
 	    year = "2023"
 	}
 
